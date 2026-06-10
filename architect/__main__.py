@@ -1,8 +1,7 @@
-import sys
-import os
-import argparse
 import json
-
+import os
+import sys
+import argparse
 
 def cmd_build(args):
     from .aml import AMLModel
@@ -12,7 +11,6 @@ def cmd_build(args):
     out_dir = args.out or os.path.dirname(os.path.abspath(args.file))
     build_aml(model, output_dir=out_dir, draw=not args.nodraw, exports=not args.noexport)
 
-
 def cmd_view(args):
     from .aml import AMLModel
     from .viewer import render_html
@@ -21,45 +19,55 @@ def cmd_view(args):
     out = args.out or None
     render_html(model, out_path=out, open_browser=True)
 
-
 def cmd_validate(args):
     from .aml import AMLModel
 
     model = AMLModel.load(args.file)
-    print(model.summary())
-    errs = model.validate()
-    if not errs:
-        print('\nOK — no errors.')
-    else:
-        print(f'\n{len(errs)} error(s) found.')
-        sys.exit(1)
 
+    print(model.summary())
+
+    errors = model.validate()
+
+    if not errors:
+        print('\nOK — no errors.')
+
+    else:
+        print(f'\n{len(errors)} error(s) found.')
+
+        sys.exit(1)
 
 def cmd_ai(args):
     from .aml import AMLModel
     from . import ai
 
     key = args.key or os.environ.get('OPENROUTER_API_KEY', '')
+
     if not key:
         print('Error: set OPENROUTER_API_KEY or pass --key')
+
         sys.exit(1)
 
     model = None
+
     if args.image:
         model = ai.from_image(args.image, prompt=args.prompt or 'Generate a 3D model from this sketch.', api_key=key)
+
     elif args.pdf:
         model = ai.from_pdf(args.pdf, prompt=args.prompt or 'Generate a 3D model from this technical drawing.', api_key=key)
+
     else:
         if not args.prompt:
             print('Error: provide --prompt, --image, or --pdf')
+
             sys.exit(1)
+
         model = ai.from_text(args.prompt, api_key=key)
 
     out = args.out or f'{model.name}.aml.json'
     model.save(out)
+
     print(f'Saved: {out}')
     print(model.summary())
-
 
 def cmd_refine(args):
     from .aml import AMLModel
@@ -70,9 +78,9 @@ def cmd_refine(args):
     refined = ai.refine(model, args.feedback, api_key=key)
     out = args.out or args.file
     refined.save(out)
+
     print(f'Saved: {out}')
     print(refined.summary())
-
 
 def main():
     parser = argparse.ArgumentParser(prog='architect', description='Architect 3D platform')
@@ -108,14 +116,19 @@ def main():
 
     if args.cmd == 'build':
         cmd_build(args)
+
     elif args.cmd == 'view':
         cmd_view(args)
+
     elif args.cmd == 'validate':
         cmd_validate(args)
+
     elif args.cmd == 'ai':
         cmd_ai(args)
+
     elif args.cmd == 'refine':
         cmd_refine(args)
+
     else:
         parser.print_help()
 

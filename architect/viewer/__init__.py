@@ -1,8 +1,7 @@
 import json
 import os
-import webbrowser
 import tempfile
-
+import webbrowser
 
 _TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
@@ -212,7 +211,7 @@ def render_html(model, out_path=None, open_browser=True):
         unit=model.unit,
         pcount=pcount,
         drawing_number=model.drawing_number,
-        model_json=model_json,
+        model_json=model_json
     )
 
     if out_path is None:
@@ -221,6 +220,7 @@ def render_html(model, out_path=None, open_browser=True):
         out_path = tmp.name
         tmp.write(html.encode('utf-8'))
         tmp.close()
+
     else:
         with open(out_path, 'w', encoding='utf-8') as f:
             f.write(html)

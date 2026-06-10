@@ -2,9 +2,7 @@ import json
 import base64
 import os
 import urllib.request
-
 from ..aml import AMLModel
-
 
 OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 DEFAULT_MODEL = 'qwen/qwen-2.5-72b-instruct'
@@ -51,6 +49,7 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences.'''
 
 def _call(messages, api_key=None, model=None):
     key = api_key or os.environ.get('OPENROUTER_API_KEY', '')
+
     if not key:
         raise RuntimeError('No API key. Set OPENROUTER_API_KEY env var or pass api_key=')
 
@@ -72,7 +71,7 @@ def _call(messages, api_key=None, model=None):
             'HTTP-Referer': 'http://localhost',
             'X-Title': 'Architect',
         },
-        method='POST',
+        method='POST'
     )
 
     with urllib.request.urlopen(req) as resp:
@@ -83,13 +82,13 @@ def _call(messages, api_key=None, model=None):
 
     return data['choices'][0]['message']['content']
 
-
 def from_text(prompt, api_key=None, model=None):
     print('Architect AI: generating from text...')
+
     messages = [{'role': 'user', 'content': prompt}]
     raw = _call(messages, api_key, model)
-    return _parse_response(raw)
 
+    return _parse_response(raw)
 
 def from_image(image_path, prompt='Generate a 3D model from this sketch.', api_key=None, model=None):
     print(f'Architect AI: generating from image: {image_path}')
@@ -112,8 +111,8 @@ def from_image(image_path, prompt='Generate a 3D model from this sketch.', api_k
 
     mdl = model or os.environ.get('ARCHITECT_MODEL', 'google/gemini-2.0-flash-001')
     raw = _call(messages, api_key, mdl)
-    return _parse_response(raw)
 
+    return _parse_response(raw)
 
 def from_pdf(pdf_path, prompt='Generate a 3D model from this technical drawing.', api_key=None, model=None):
     print(f'Architect AI: generating from PDF: {pdf_path}')
@@ -125,27 +124,30 @@ def from_pdf(pdf_path, prompt='Generate a 3D model from this technical drawing.'
         'role': 'user',
         'content': [
             {'type': 'image_url', 'image_url': {'url': f'data:application/pdf;base64,{pdf_data}'}},
-            {'type': 'text', 'text': prompt},
+            {'type': 'text', 'text': prompt}
         ]
     }]
 
     mdl = model or os.environ.get('ARCHITECT_MODEL', 'google/gemini-2.0-flash-001')
     raw = _call(messages, api_key, mdl)
-    return _parse_response(raw)
 
+    return _parse_response(raw)
 
 def refine(model, feedback, api_key=None, ai_model=None):
     print('Architect AI: refining model...')
+
     messages = [{
         'role': 'user',
         'content': f'Current model:\n{model.to_json()}\n\nModify it: {feedback}'
     }]
-    raw = _call(messages, api_key, ai_model)
-    return _parse_response(raw)
 
+    raw = _call(messages, api_key, ai_model)
+
+    return _parse_response(raw)
 
 def _parse_response(raw):
     text = raw.strip()
+
     if text.startswith('```'):
         lines = text.split('\n')
         text = '\n'.join(lines[1:-1] if lines[-1] == '```' else lines[1:])
@@ -153,10 +155,12 @@ def _parse_response(raw):
     data = json.loads(text)
     result = AMLModel.from_dict(data)
 
-    errs = result.validate()
-    if errs:
+    errors = result.validate()
+    
+    if errors:
         print('Validation warnings:')
-        for e in errs:
+
+        for e in errors:
             print(f'  ! {e}')
 
     return result

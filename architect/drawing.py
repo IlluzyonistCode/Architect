@@ -1,8 +1,7 @@
+import os
 from build123d import *
 from build123d import scale as b123d_scale
 from datetime import date
-import os
-
 
 def _project_safe(part, eye, up, look_at, origin_x, origin_y, sf):
     try:
@@ -11,16 +10,18 @@ def _project_safe(part, eye, up, look_at, origin_x, origin_y, sf):
         hid_s = b123d_scale(hid, sf)
         vis_out = ShapeList([s.locate(Location((origin_x, origin_y, 0))) for s in vis_s])
         hid_out = ShapeList([s.locate(Location((origin_x, origin_y, 0))) for s in hid_s])
+
         return vis_out, hid_out
     except Exception as e:
         print(f'    projection error: {e}')
-        return ShapeList(), ShapeList()
 
+        return ShapeList(), ShapeList()
 
 def export_drawing(part, out_path, title, subtitle, number, model_h,
                    drawing_scale=0.65, iso_scale_factor=0.7, spacing=45):
 
     print('  Creating border...')
+
     border = TechnicalDrawing(
         title=title,
         sub_title=subtitle,
@@ -29,7 +30,7 @@ def export_drawing(part, out_path, title, subtitle, number, model_h,
         design_date=date.today(),
         drawing_number=number,
         sheet_number=1,
-        drawing_scale=1,
+        drawing_scale=1
     )
 
     page = border.bounding_box().size
@@ -76,12 +77,19 @@ def export_drawing(part, out_path, title, subtitle, number, model_h,
     look = (0, 0, model_h / 2)
 
     print('  Front view...')
+
     vv_f, vh_f = _project_safe(part, (0, -5000, 0), (0, 0, 1), look, vfx, vfy, ds)
+
     print('  Top view...')
+
     vv_t, vh_t = _project_safe(part, (0, 0, 5000), (-1, 0, 0), look, vtx, vty, ds)
+
     print('  Right view...')
+
     vv_r, vh_r = _project_safe(part, (5000, 0, 0), (0, 0, 1), look, vrx, vry, ds)
+
     print('  Isometric view...')
+    
     vv_i, vh_i = _project_safe(part, (3000, -3000, 2500), (0, 0, 1), look, vix, viy, iso_s)
 
     all_vis = vv_f + vv_t + vv_r + vv_i

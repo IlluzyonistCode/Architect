@@ -1,8 +1,6 @@
 import json
 import os
 from dataclasses import dataclass, field, asdict
-from typing import Optional
-
 
 PRIMITIVE_TYPES = {
     'box', 'cylinder', 'pipe', 'sphere', 'cone', 'torus',
@@ -10,16 +8,16 @@ PRIMITIVE_TYPES = {
     'spring', 'thread', 'gear', 'slot', 'keyway',
     'grid', 'linear_array', 'polar_array',
     'logo', 'text',
-    'mirror',
+    'mirror'
 }
 
 FACE_NORMALS = {
     'front': (0, -1, 0),
-    'back':  (0,  1, 0),
-    'left':  (-1, 0, 0),
+    'back': (0, 1, 0),
+    'left': (-1, 0, 0),
     'right': ( 1, 0, 0),
-    'top':   (0,  0, 1),
-    'bottom':(0,  0, -1),
+    'top': (0, 0, 1),
+    'bottom':(0, 0, -1)
 }
 
 
@@ -46,22 +44,17 @@ class Primitive:
     spacing: float = 5
     subtract: bool = False
     label: str = ''
-    # cone / torus / spring extras
     radius2: float = 2
     turns: float = 5
     pitch: float = 3
-    # gear
     teeth: int = 12
-    # array
     count: int = 3
     count_y: int = 1
     angle_total: float = 360
     dx: float = 20
     dy: float = 0
     dz: float = 0
-    # mirror axis
     mirror_axis: str = 'x'
-    # operation targets (comma-separated labels)
     targets: str = ''
 
 
@@ -79,7 +72,9 @@ class AMLModel:
 
     def add(self, **kwargs):
         p = Primitive(**kwargs)
+
         self.primitives.append(asdict(p))
+
         return self
 
     def to_json(self, indent=2):
@@ -88,26 +83,34 @@ class AMLModel:
     def save(self, path):
         with open(path, 'w', encoding='utf-8') as f:
             f.write(self.to_json())
+
         return path
 
     @staticmethod
     def load(path):
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
         m = AMLModel()
+
         for k, v in data.items():
             if k != 'primitives':
                 setattr(m, k, v)
+
         m.primitives = data.get('primitives', [])
+
         return m
 
     @staticmethod
     def from_dict(data):
         m = AMLModel()
+
         for k, v in data.items():
             if k != 'primitives':
                 setattr(m, k, v)
+
         m.primitives = data.get('primitives', [])
+
         return m
 
     @staticmethod
@@ -116,28 +119,40 @@ class AMLModel:
 
     def validate(self):
         errors = []
+
         for i, p in enumerate(self.primitives):
             t = p.get('type', '')
+
             if t not in PRIMITIVE_TYPES:
                 errors.append(f'primitive[{i}]: unknown type "{t}"')
+
             if p.get('type') == 'logo' and not p.get('svg'):
                 errors.append(f'primitive[{i}]: logo requires "svg" path')
+
             if p.get('type') == 'text' and not p.get('text'):
                 errors.append(f'primitive[{i}]: text requires "text" value')
+
         return errors
 
     def summary(self):
         counts = {}
+
         for p in self.primitives:
             t = p.get('type', '?')
             counts[t] = counts.get(t, 0) + 1
+
         lines = [f'Model: {self.name}  ({self.width}x{self.depth}x{self.height} {self.unit})']
         lines.append(f'Primitives: {len(self.primitives)}')
+
         for t, n in counts.items():
             lines.append(f'  {t}: {n}')
-        errs = self.validate()
-        if errs:
-            lines.append(f'Errors: {len(errs)}')
-            for e in errs:
+
+        errors = self.validate()
+
+        if errors:
+            lines.append(f'Errors: {len(errors)}')
+
+            for e in errors:
                 lines.append(f'  ! {e}')
+        
         return '\n'.join(lines)
